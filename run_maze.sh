@@ -1,0 +1,1 @@
+linux/squashfs-root/mms
