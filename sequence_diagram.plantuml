@@ -1,0 +1,127 @@
+@startuml
+skinparam style monochrome true
+skinparam sequenceMessageAlign center
+
+actor User
+participant "Main" as Main
+participant "Robot" as Robot
+participant "Algorithm\n(DFS/BFS)" as Algo
+participant "Maze" as Maze
+participant "MazeControlAPI\n(Simulator)" as API
+
+User -> Main: Execute Program
+activate Main
+Main -> Robot: <<create>>
+activate Robot
+Main -> Robot: set_color(start/goal)
+Robot -> Maze: set_color(start/goal)
+activate Maze
+Maze -> API: set_color(...)
+activate API
+return
+return
+return
+Main -> Robot: set_text(start/goal)
+activate Robot
+Robot -> Maze: set_text(start/goal)
+activate Maze
+Maze -> API: set_text(...)
+activate API
+return
+return
+return
+
+Main -> Algo: \t\t\t<<create>>
+activate Algo
+return
+Main -> Robot: set_algorithm(BFS/DFS)
+activate Robot
+return
+
+
+Main -> Robot: start_exploration()
+activate Robot
+    Robot -> Algo: solve()
+    activate Algo
+    return path
+return path
+
+== Path Following & Replanning Loop ==
+Main -> Robot: path_follow_replan(path)
+activate Robot
+
+loop while path.size() > 1
+    
+    Robot -> Robot: get_target_direction()
+    Robot --> Robot: target_dir
+    Robot -> Robot: face_direction(target_dir)
+        Robot -> Maze: turn_right/left()
+        activate Maze
+        Maze -> API: turn_right/left()
+        activate API
+        return
+        return
+
+    group Sense Walls
+        Robot -> Maze: has_wall_front/left/right()
+        activate Maze
+        Maze -> API: has_wall_...()
+        activate API
+        return bool
+        return bool
+    end
+
+    opt Wall Detected
+        Robot -> Robot: set_walls(...)
+            Robot -> Maze: set_wall(...)
+            activate Maze
+            Maze -> API: set_wall(...)
+            activate API          
+            return
+            return
+
+        Robot -> Robot: Check if path blocked by new walls
+        Robot --> Robot: is_blocked
+        
+        alt Path Blocked
+            Robot -> Algo: set_start(current_pose)
+            activate Algo
+            return
+            Robot -> Algo: solve()
+            activate Algo
+            return new_path
+            Robot -> Robot: Update path = new_path
+            Robot --> Robot:
+        end
+    end
+
+    opt Path Clear
+        Robot -> Maze: move_forward(1)
+        activate Maze
+        Maze -> API: move_forward(1)
+        activate API
+        return
+        return
+        
+    end
+
+end
+
+return goal_reached
+Main -> Main: Visualization (Final BFS/DFS run)
+Main --> Main: dfs_at_end/bfs_at_end
+
+Main -> Maze: set_color(bfs_path_at_end/dfs_path_at_end)
+activate Maze
+Maze -> API: set_color(...)
+activate API
+return
+return
+return 0
+
+deactivate User
+deactivate Main
+deactivate Algo
+deactivate Robot
+
+@enduml

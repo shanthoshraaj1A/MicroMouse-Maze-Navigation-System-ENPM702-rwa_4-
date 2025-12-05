@@ -1,0 +1,132 @@
+@startuml
+
+' Style configurations
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "micro_mouse" {
+
+    class Node {
+        - x_ : int
+        - y_ : int
+        - d_ : char
+        - parent_x_ : int
+        - parent_y_ : int
+        + Node()
+        + Node(x: int, y: int, d: char, parent_x: int, parent_y: int)
+        + operator<(other: Node) : bool
+    }
+
+    class Maze {
+        - width_ : int
+        - height_ : int
+        - map_ : Map
+        + set_wall(x: int, y: int, direction: char) : void
+        + has_wall_left() : bool
+        + has_wall_right() : bool
+        + has_wall_front() : bool
+        + move_forward(distance: int) : void
+        + turn_right() : void
+        + turn_left() : void
+        + clear_wall(x: int, y: int, direction: char) : void
+        + set_color(x: int, y: int, color: char) : void
+        + clear_color(x: int, y: int) : void
+        + clear_all_color() : void
+        + set_text(x: int, y: int, text: const std::string&) : void
+        + clear_text(x: int, y: int) : void
+        + clear_all_text() : void
+        + was_reset() : bool
+        + ack_reset() : void
+        + log(text: std::string_view) : void
+    }
+
+    abstract class Algorithm {
+        # type_ : std::string
+        # visited_ : std::set<Node>
+        # start_ : Node
+        # goal_ : std::array<int, 2>
+        # maze_ : Maze&
+        + {abstract} solve() : std::vector<Node>
+    }
+
+    class DFS {
+        - stack_ : std::stack<Node>
+        + solve() : std::vector<Node>
+        + backtrack(curr: Node&) : std::vector<Node>
+        - is_valid_move(next_node: Node) : bool
+    }
+
+    class BFS {
+        - queue_ : std::queue<Node>
+        + solve() : std::vector<Node>
+        + backtrack(curr: Node&) : std::vector<Node>
+        - is_valid_move(next_node: Node) : bool
+    }
+
+    class Robot {
+        - maze_ : Maze
+        - algo_ : std::shared_ptr<Algorithm>
+        - x_ : int
+        - y_ : int
+        - d_ : char
+        - d_ang_ : int
+        - ang_to_d_ : std::map<int, char>
+        - d_to_ang_ : std::map<char, int>
+        - path_ : std::vector<Node>
+        + start_exploration() : std::vector<Node>
+        + turn_left() : void
+        + turn_right() : void
+        + move_forward(distance: int) : void
+        + face_direction(target_d: char) : void
+        + path_follow_replan(path: std::vector<Node>&) : bool
+        + normalize_angle(angle_raw: int) : int
+        + set_walls(index: int, dir_enum: map, wall_dirs: array, next_wall_dirs: array, map: Map&) : void
+        + get_neighbor_coords(dir: char) : std::pair<int, int>
+        + get_target_direction(dx: int, dy: int) : char
+        + show_algo_path(path: std::vector<Node>&) : void
+    }
+
+class MazeControlAPI {
+        + get_maze_width() : static int
+        + get maze_height() : static int
+        + set_wall(x: int, y: int, direction: char) : static void
+        + has_wall_left() : static bool
+        + has_wall_right() : static bool
+        + has_wall_front() : static bool
+        + move_forward(distance: int) : static void
+        + turn_right() : static void
+        + turn_left() : static void
+        + clear_wall(x: int, y: int, direction: char) : static void
+        + set_color(x: int, y: int, color: char) : static void
+        + clear_color(x: int, y: int) : static void
+        + clear_all_color() : static void
+        + set_text(x: int, y: int, text: const std::string&) : static void
+        + clear_text(x: int, y: int) : static void
+        + clear_all_text() : static void
+        + was_reset() : static bool
+        + ack_reset() : static void
+        + log(text: std::string_view) : static void
+    }
+
+}
+
+' Inheritance Relationships
+Algorithm <|-- DFS
+Algorithm <|-- BFS
+
+' Composition: Robot owns Maze
+Robot "1\t"*--"1..*\t" Maze : consists of
+
+' Aggregation: Robot has reference to Algorithm
+Robot "\t\t1..* \r\n1 "o-- Algorithm :Uses
+
+' Association: Algorithm holds reference to Maze
+Algorithm "\t\t\t\t0..*"-->"1..*" Maze : follows
+
+' Dependency: Classes use Node
+Robot ..> Node
+Algorithm ..> Node
+Maze ..> Node
+Maze ..>"Uses (static API)\n" MazeControlAPI
+
+@enduml
